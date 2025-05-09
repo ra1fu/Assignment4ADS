@@ -1,8 +1,10 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class WeightedGraph<Vertex> {
+public class WeightedGraph<V> {
+
     private final boolean undirected;
-    private final Map<Vertex, List<Edge<Vertex>>> map = new HashMap<>();
+    private final Map<V, Vertex<V>> vertices = new HashMap<>();
 
     public WeightedGraph() {
         this(true);
@@ -12,71 +14,44 @@ public class WeightedGraph<Vertex> {
         this.undirected = undirected;
     }
 
-    public void addVertex(Vertex v) {
-        if (hasVertex(v))
-            return;
-
-        map.put(v, new LinkedList<>());
+    public void addVertex(V data) {
+        vertices.computeIfAbsent(data, Vertex::new);
     }
 
-    public void addEdge(Vertex source, Vertex dest, double weight) {
-        if (!hasVertex(source))
-            addVertex(source);
+    public void addEdge(V source, V dest, double weight) {
+        if (Objects.equals(source, dest)) return;
+        addVertex(source);
+        addVertex(dest);
 
-        if (!hasVertex(dest))
-            addVertex(dest);
+        Vertex<V> from   = vertices.get(source);
+        Vertex<V> to     = vertices.get(dest);
 
-        if (hasEdge(source, dest)
-                || source.equals(dest))
-            return; // reject parallels & self-loops
-
-        map.get(source).add(new Edge<>(source, dest, weight));
-
-        if (undirected)
-            map.get(dest).add(new Edge<>(dest, source, weight));
-    }
-
-    public int getVerticesCount() {
-        return map.size();
-    }
-
-    public int getEdgesCount() {
-        int count = 0;
-        for (Vertex v : map.keySet()) {
-            count += map.get(v).size();
+        from.addAdjacentVertex(to, weight);
+        if (undirected) {
+            to.addAdjacentVertex(from, weight);
         }
-
-        if (undirected)
-            count /= 2;
-
-        return count;
+    }
+    
+    public boolean hasVertex(V v) {
+        return vertices.containsKey(v);
     }
 
-
-    public boolean hasVertex(Vertex v) {
-        return map.containsKey(v);
+    public Set<V> adjacencyList(V v) {
+        Vertex<V> vertex = vertices.get(v);
+        if (vertex == null) return Collections.emptySet();
+        return vertex.getAdjacentVertices()
+                .keySet()
+                .stream()
+                .map(Vertex::getData)
+                .collect(Collectors.toSet());
     }
 
-    public boolean hasEdge(Vertex source, Vertex dest) {
-        if (!hasVertex(source)) return false;
-
-        return map.get(source).contains(new Edge<>(source, dest));
-    }
-
-    public List<Vertex> adjacencyList(Vertex v) {
-        if (!hasVertex(v)) return null;
-
-        List<Vertex> vertices = new LinkedList<>();
-        for (Edge<Vertex> e : map.get(v)) {
-            vertices.add(e.getDest());
-        }
-
-        return vertices;
-    }
-
-    public Iterable<Edge<Vertex>> getEdges(Vertex v) {
-        if (!hasVertex(v)) return null;
-
-        return map.get(v);
+    public double getWeight(V source, V dest) {
+        Vertex<V> from = vertices.get(source);
+        Vertex<V> to   = vertices.get(dest);
+        if (from == null || to == null) throw new IllegalArgumentException("Unknown vertex");
+        Double w = from.getAdjacentVertices().get(to);
+        if (w == null) throw new IllegalArgumentException("No edge");
+        return w;
     }
 }
