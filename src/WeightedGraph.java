@@ -31,7 +31,7 @@ public class WeightedGraph<V> {
             to.addAdjacentVertex(from, weight);
         }
     }
-    
+
     public boolean hasVertex(V v) {
         return vertices.containsKey(v);
     }
