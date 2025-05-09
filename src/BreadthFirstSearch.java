@@ -15,7 +15,7 @@ public class BreadthFirstSearch<V> extends Search<V> {
         while (!queue.isEmpty()) {
             V v = queue.remove();
             for (V neighbour : graph.adjacencyList(v)) {
-                if (marked.add(neighbour)) { 
+                if (marked.add(neighbour)) {
                     edgeTo.put(neighbour, v);
                     queue.add(neighbour);
                 }
